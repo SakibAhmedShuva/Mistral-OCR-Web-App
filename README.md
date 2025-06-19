@@ -1,4 +1,4 @@
-# Mistral OCR Flask API
+# Mistral OCR Flask API based Web App
 
 This project provides a comprehensive Flask API for interacting with the Mistral OCR and Chat models, demonstrating functionalities for processing PDFs and images to extract both raw text and structured JSON data.
 
