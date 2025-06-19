@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mistral OCR API Tester</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f9;
+            color: #333;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #0d1a26;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #0b294a;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input[type="file"], select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        pre {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: "Courier New", Courier, monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mistral OCR API Tester</h1>
+
+    <!-- PDF OCR -->
+    <div class="card">
+        <h2>PDF OCR</h2>
+        <p>Upload a PDF to get its content in Markdown format.</p>
+        <form id="pdf-ocr-form">
+            <input type="file" name="file" accept=".pdf" required>
+            <button type="submit">Process PDF</button>
+        </form>
+        <pre id="pdf-ocr-result"></pre>
+    </div>
+
+    <!-- Image OCR -->
+    <div class="card">
+        <h2>Image OCR</h2>
+        <p>Upload an image to get its content in Markdown format.</p>
+        <form id="image-ocr-form">
+            <input type="file" name="file" accept="image/*" required>
+            <button type="submit">Process Image</button>
+        </form>
+        <pre id="image-ocr-result"></pre>
+    </div>
+
+    <!-- Structured OCR from Image -->
+    <div class="card">
+        <h2>Structured OCR from Image</h2>
+        <p>Upload an image to extract structured JSON. The OCR result is passed to another model for structuring.</p>
+        <form id="structured-ocr-form">
+            <input type="file" name="file" accept="image/*" required>
+            <select name="model_type">
+                <option value="vision" selected>Vision Model (pixtral-12b-latest)</option>
+                <option value="text">Text-Only Model (ministral-8b-latest)</option>
+            </select>
+            <button type="submit">Extract Structured Data</button>
+        </form>
+        <pre id="structured-ocr-result"></pre>
+    </div>
+    
+    <!-- Custom Structured OCR -->
+    <div class="card">
+        <h2>Custom Schema OCR from Image</h2>
+        <p>Upload an image to extract JSON that conforms to a predefined Pydantic model.</p>
+        <form id="custom-structured-ocr-form">
+            <input type="file" name="file" accept="image/*" required>
+            <button type="submit">Extract Custom Schema</button>
+        </form>
+        <pre id="custom-structured-ocr-result"></pre>
+    </div>
+
+<script>
+    function handleFormSubmit(formId, resultId, endpoint) {
+        const form = document.getElementById(formId);
+        const resultEl = document.getElementById(resultId);
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            resultEl.textContent = 'Processing...';
+
+            const formData = new FormData(form);
+            const modelType = form.querySelector('select[name="model_type"]')?.value;
+            let fullEndpoint = endpoint;
+            if (modelType) {
+                fullEndpoint += `?model_type=${modelType}`;
+            }
+
+            try {
+                const response = await fetch(fullEndpoint, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('Error:', error);
+                resultEl.textContent = `Error: ${error.message}`;
+            }
+        });
+    }
+
+    handleFormSubmit('pdf-ocr-form', 'pdf-ocr-result', '/ocr/pdf');
+    handleFormSubmit('image-ocr-form', 'image-ocr-result', '/ocr/image');
+    handleFormSubmit('structured-ocr-form', 'structured-ocr-result', '/ocr/structured/image');
+    handleFormSubmit('custom-structured-ocr-form', 'custom-structured-ocr-result', '/ocr/custom_structured/image');
+</script>
+
+</body>
+</html>
