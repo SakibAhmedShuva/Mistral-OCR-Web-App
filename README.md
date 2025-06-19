@@ -11,6 +11,11 @@ This project provides a comprehensive Flask API for interacting with the Mistral
 -   **Simple Frontend**: An easy-to-use web interface to test all API endpoints.
 -   **CORS Enabled**: Allows for easy integration with any web frontend.
 
+
+![image](https://github.com/user-attachments/assets/a64c98c7-81e5-4086-b19f-2a1aad03cf0e)
+
+
+
 ## Setup and Installation
 
 ### 1. Prerequisites
