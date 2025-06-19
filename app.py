@@ -86,20 +86,34 @@ def encode_image_to_base64(file_path: str) -> str:
 # API Routes
 
 @app.route('/', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "service": "Mistral OCR API",
-        "version": "1.0.0",
-        "endpoints": {
-            "pdf_ocr": "/api/pdf/ocr",
-            "pdf_ocr_structured": "/api/pdf/ocr/structured",
-            "image_ocr": "/api/image/ocr",
-            "image_ocr_structured": "/api/image/ocr/structured",
-            "batch_ocr": "/api/batch/ocr"
-        }
-    })
+def home():
+    """
+    Serve the main page or a health check based on content negotiation.
+    A browser will request 'text/html' and get the main page.
+    The frontend's JS `fetch` will request '*/*' and get the JSON health check.
+    """
+    # For a wildcard accept header ('*/*'), best_match returns the first item.
+    # For a browser's specific header ('text/html,...'), it returns 'text/html'.
+    supported_types = ['application/json', 'text/html']
+    best = request.accept_mimetypes.best_match(supported_types)
+
+    if best == 'text/html':
+        return send_file('index.html')
+    else:  # best is 'application/json' or None (defaults to json for API)
+        # This is the health check for the frontend.
+        # It also serves as an API discovery endpoint for developers.
+        return jsonify({
+            "status": "healthy",
+            "service": "Mistral OCR API",
+            "version": "1.0.0",
+            "endpoints": {
+                "pdf_ocr": "/api/pdf/ocr",
+                "pdf_ocr_structured": "/api/pdf/ocr/structured",
+                "image_ocr": "/api/image/ocr",
+                "image_ocr_structured": "/api/image/ocr/structured",
+                "batch_ocr": "/api/batch/ocr"
+            }
+        })
 
 @app.route('/api/pdf/ocr', methods=['POST'])
 def pdf_ocr():
