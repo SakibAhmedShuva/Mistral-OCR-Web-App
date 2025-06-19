@@ -5,11 +5,15 @@ from pathlib import Path
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from mistralai.client import MistralClient
-from mistralai.models.chat_completion import ImageURLChunk, TextChunk
-from mistralai.models.ocr import DocumentURLChunk, ImageURLChunk as OCRImageURLChunk
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+
+# --- Corrected Import Paths ---
+# These classes are used for constructing chat messages with vision models.
+from mistralai.models.messages import ImageURLChunk, TextChunk
+# These classes are used for submitting documents to the OCR endpoint.
+from mistralai.models.ocr import DocumentURLChunk, ImageURLChunk as OCRImageURLChunk
 
 # Load environment variables from .env file
 load_dotenv()
@@ -206,6 +210,7 @@ def custom_structured_ocr_image():
     try:
         # 1. OCR the image
         file_bytes = file.read()
+        filename = secure_filename(file.filename)
         encoded_image = base64.b64encode(file_bytes).decode()
         mime_type = file.mimetype or 'image/jpeg'
         base64_data_url = f"data:{mime_type};base64,{encoded_image}"
@@ -219,9 +224,9 @@ def custom_structured_ocr_image():
         # 2. Prepare prompt for chat.parse
         prompt = (
             f"This is the image's OCR in markdown:\n{image_ocr_markdown}\n\n"
-            "Convert this into a structured JSON response. "
-            "For the `file_name`, use the original filename without the extension. "
-            "For `ocr_contents`, create a sensible dictionary."
+            f"Convert this into a structured JSON response. "
+            f"For the `file_name`, use the following string: '{Path(filename).stem}'. "
+            f"For `ocr_contents`, create a sensible dictionary."
         )
 
         # 3. Use chat.parse with the Pydantic model
